@@ -94,8 +94,8 @@ function Home() {
         </div>
         <p className="mt-6 max-w-3xl text-lg text-fg">
           The Witcher 3 Remastered ships DLSS 4.5, ray tracing, and path tracing, then hides them
-          when it notices Wine. This package installs a Proton build that stops that check. The game
-          files stay untouched.
+          when it notices Wine. This package installs a Proton build that stops that check and additionally adds DLSS5
+          (optional) via the Mod (unofficial).
         </p>
         <dl className="mt-6 grid gap-3 sm:grid-cols-3">
           <Fact k="Proton" v="Wineland 11.0-20260930" />
@@ -193,8 +193,8 @@ function Home() {
               onChange={(event) => patch("dlss5", event.target.checked)}
             />
             <span>
-              Also install DLSS 5. Unofficial neural rendering for NVIDIA. The game file stays
-              untouched. About 110 MB more, and it costs frames.
+              Also install DLSS 5. Unofficial neural rendering for NVIDIA (20x to 50x cards). The game file stays
+              untouched. About 110 MB more, and it eats frames.
             </span>
           </label>
           {opts.gpu === "nvidia" && opts.dlss5 ? (

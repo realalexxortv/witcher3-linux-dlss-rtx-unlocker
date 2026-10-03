@@ -25,4 +25,4 @@ Tick **Also install DLSS 5** in the window before Install. NVIDIA cards only.
 
 This is not a CDPR feature. It costs frames.
 
-100% vibecoded in Grok.
+99% vibecoded in Grok.
