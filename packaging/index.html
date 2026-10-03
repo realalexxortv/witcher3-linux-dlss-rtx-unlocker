@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wolfsgate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@400;500;600&display=swap" />
+  <style>
+    :root {
+      --bg: #100c09; --raise: #18130f; --surface: #221c16; --line: #3d342a;
+      --fg: #e7d7b8; --muted: #a89880; --faint: #7c6e5e; --gold: #c6a15a;
+      --gold-2: #e4c98a; --ink: #1a120c; --ok: #9bb583; --ember: #8c3a32;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+    }
+    h1, h2 { font-family: Cinzel, Georgia, serif; font-weight: 600; margin: 0; }
+    main { max-width: 920px; margin: 0 auto; padding: 28px 16px 48px; }
+    p { color: var(--muted); line-height: 1.5; }
+    .grid { display: grid; gap: 16px; }
+    @media (min-width: 800px) { .grid { grid-template-columns: 1fr 1fr; } }
+    fieldset { border: 0; margin: 0 0 12px; padding: 0; }
+    legend { color: var(--faint); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    button, .choice { cursor: pointer; }
+    .choice {
+      display: block; width: 100%; text-align: left; margin-top: 8px;
+      background: var(--raise); color: var(--fg); border: 1px solid var(--line);
+      border-radius: 12px; padding: 10px 12px;
+    }
+    .choice[aria-checked="true"] { border-color: var(--gold); background: #2c241c; }
+    .choice small { display: block; color: var(--muted); }
+    .card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 16px; }
+    .gold { background: var(--gold); color: var(--ink); border: 0; border-radius: 12px; height: 44px; padding: 0 16px; font-weight: 600; }
+    .ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 12px; height: 44px; padding: 0 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    label.check { display: flex; gap: 8px; align-items: flex-start; color: var(--fg); font-size: 14px; }
+    pre {
+      background: var(--bg); color: var(--gold-2); border-radius: 12px; padding: 12px;
+      min-height: 140px; max-height: 280px; overflow: auto; white-space: pre-wrap; font-size: 13px;
+    }
+    .kicker { color: var(--gold); letter-spacing: 0.14em; text-transform: uppercase; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="kicker">CachyOS · Steam · The Witcher 3 Remastered</p>
+    <h1>Wolfsgate</h1>
+    <p>This window installs Proton Wineland so DLSS, ray tracing, and path tracing stop being hidden. The game file is not edited. Quit Steam, including the tray icon, before you install.</p>
+    <div class="grid">
+      <form id="form" class="card">
+        <h2>Your machine</h2>
+        <fieldset id="gpu"><legend>GPU</legend></fieldset>
+        <fieldset id="machine"><legend>Display GPU</legend></fieldset>
+        <fieldset id="cpu"><legend>CPU</legend></fieldset>
+        <fieldset id="steam"><legend>Steam</legend></fieldset>
+        <label class="check"><input id="pin" type="checkbox" /> Also select this Proton in Steam’s config. Steam must be fully quit.</label>
+        <div class="row">
+          <button class="gold" id="install" type="submit">Install</button>
+          <button class="ghost" id="remove" type="button">Remove</button>
+          <button class="ghost" id="quit" type="button">Quit</button>
+        </div>
+      </form>
+      <section class="card">
+        <h2>What happens</h2>
+        <p id="status">Waiting.</p>
+        <pre id="log">The log appears here. The Proton download is about 360 MB.</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const groups = {
+      gpu: [["nvidia", "NVIDIA", "DLSS and ray tracing"], ["amd", "AMD", "FSR and ray tracing"], ["intel", "Intel", "Ray tracing"]],
+      machine: [["desktop", "Desktop", "One graphics card"], ["hybrid", "Laptop", "Dedicated GPU plus an iGPU"]],
+      cpu: [["v3", "x86-64-v3", "CachyOS default"], ["baseline", "Baseline", "No AVX2"]],
+      steam: [["native", "Native", "steam from the repos"], ["flatpak", "Flatpak", "com.valvesoftware.Steam"]]
+    };
+    const state = { gpu: "nvidia", machine: "desktop", cpu: "v3", steam: "native" };
+    for (const [key, options] of Object.entries(groups)) {
+      const box = document.getElementById(key);
+      for (const [id, title, detail] of options) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice";
+        button.setAttribute("role", "radio");
+        button.dataset.id = id;
+        button.innerHTML = title + "<small>" + detail + "</small>";
+        button.addEventListener("click", () => { state[key] = id; paint(key); });
+        box.appendChild(button);
+      }
+      paint(key);
+    }
+    function paint(key) {
+      for (const button of document.getElementById(key).querySelectorAll("button")) {
+        button.setAttribute("aria-checked", button.dataset.id === state[key] ? "true" : "false");
+      }
+    }
+    const logEl = document.getElementById("log");
+    const statusEl = document.getElementById("status");
+    let timer = 0;
+    async function poll() {
+      const res = await fetch("/log");
+      const data = await res.json();
+      logEl.textContent = data.log || "Waiting.";
+      logEl.scrollTop = logEl.scrollHeight;
+      if (data.running) statusEl.textContent = "Working. This can take a few minutes.";
+      else if (data.code === 0) statusEl.textContent = "Done. Restart Steam, then force Proton Wineland under Compatibility.";
+      else if (data.code == null) statusEl.textContent = "Waiting.";
+      else statusEl.textContent = "Stopped with an error. The log has the reason.";
+      if (!data.running) { clearInterval(timer); timer = 0; }
+    }
+    function watch() { if (!timer) timer = setInterval(poll, 700); poll(); }
+    async function post(path) {
+      const body = { ...state, pin: document.getElementById("pin").checked };
+      const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        statusEl.textContent = err.error || "Could not start.";
+        return;
+      }
+      watch();
+    }
+    document.getElementById("form").addEventListener("submit", (event) => { event.preventDefault(); post("/install"); });
+    document.getElementById("remove").addEventListener("click", () => post("/remove"));
+    document.getElementById("quit").addEventListener("click", async () => {
+      await fetch("/quit", { method: "POST" });
+      statusEl.textContent = "Closed. You can shut this tab.";
+    });
+  </script>
+</body>
+</html>
