@@ -84,7 +84,7 @@ function Home() {
           <img src="/favicon.svg" alt="" width={48} height={48} className="h-12 w-12" />
           <div>
             <p className="text-xs font-medium tracking-widest text-gold uppercase">
-              CachyOS · Steam · App 292030
+              Linux · Steam · AppID 292030
             </p>
             <h1 className="text-4xl text-fg">Wolfsgate</h1>
           </div>
@@ -152,8 +152,7 @@ function Home() {
               onChange={(event) => patch("pin", event.target.checked)}
             />
             <span>
-              Also select this Proton in Steam’s config. Steam must be fully quit, tray icon
-              included. A backup of config.vdf is written first.
+              Set the necessary Proton in Steam config? (Disable if you rather do it yourself)
             </span>
           </label>
         </form>
@@ -185,7 +184,7 @@ function Home() {
             <p className="mt-2 text-sm text-muted">
               Save the script, quit Steam, then run it in a terminal. It downloads Proton Wineland
               from GitHub, checks the SHA512, and puts it in Steam’s compatibility tools. It does
-              not replace proton-cachyos from the repos.
+              not replace proton from the repos.
             </p>
             <pre className="mt-4 overflow-x-auto rounded-card bg-bg px-3 py-3 text-sm text-gold-2">
               {RUN_COMMAND}
