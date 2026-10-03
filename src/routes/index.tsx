@@ -116,7 +116,7 @@ function Home() {
         </pre>
         <a
           className="mt-4 inline-flex h-11 items-center gap-2 rounded-card bg-gold px-4 text-sm font-medium text-ink"
-          href="https://github.com/realalexxortv/witcher3-linux-dlss-rtx-unlocker/releases/download/v1.1.0/Wolfsgate-x86_64.AppImage"
+          href="https://github.com/realalexxortv/witcher3-linux-dlss-rtx-unlocker/releases/download/v1.2.0/Wolfsgate-x86_64.AppImage"
         >
           <Download className="h-4 w-4" aria-hidden />
           Download AppImage
