@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Wolfsgate">
+  <rect width="32" height="32" rx="6" fill="#100c09"/>
+  <circle cx="16" cy="17.2" r="10.2" fill="none" stroke="#c6a15a" stroke-width="1.75"/>
+  <path fill="#c6a15a" d="M10.2 15.4 13 8.8 15.4 14.4z"/>
+  <path fill="#c6a15a" d="M21.8 15.4 19 8.8 16.6 14.4z"/>
+  <path fill="#c6a15a" d="M11.1 16.6 16 13.7 20.9 16.6 19.2 17.7 16 15.6 12.8 17.7z"/>
+  <path fill="none" stroke="#c6a15a" stroke-width="1.7" stroke-linejoin="miter" d="M12.1 18.5 16 22.8 19.9 18.5"/>
+</svg>

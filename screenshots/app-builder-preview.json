@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Wolfsgate",
+      "hasCanvas": false,
+      "bodyTextLen": 4617,
+      "bodyTextHash": "b4229b024fef49f74137983ac2c7e5992d7a5f68535f94cabbe7563f453017c0",
+      "bodyTextPrefix": "CACHYOS · STEAM · APP 292030 Wolfsgate The Witcher 3 Remastered ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Wolfsgate",
+      "hasCanvas": false,
+      "bodyTextLen": 4592,
+      "bodyTextHash": "4ebf9ef37e91a378f349dc9ce545dce41b2e84009c9e6be3579c3f17922c868d",
+      "bodyTextPrefix": "CACHYOS · STEAM · APP 292030 Wolfsgate The Witcher 3 Remastered ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
