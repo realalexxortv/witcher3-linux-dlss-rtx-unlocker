@@ -4,6 +4,7 @@ export type Gpu = "nvidia" | "amd" | "intel";
 export type Machine = "desktop" | "hybrid";
 export type Cpu = "v3" | "baseline";
 export type SteamKind = "native" | "flatpak";
+export type Dlss5Gpu = "50" | "40";
 
 export type Options = {
   gpu: Gpu;
@@ -11,6 +12,8 @@ export type Options = {
   cpu: Cpu;
   steam: SteamKind;
   pin: boolean;
+  dlss5: boolean;
+  dlss5Gpu: Dlss5Gpu;
 };
 
 export const DEFAULT_OPTIONS: Options = {
@@ -19,12 +22,15 @@ export const DEFAULT_OPTIONS: Options = {
   cpu: "v3",
   steam: "native",
   pin: false,
+  dlss5: false,
+  dlss5Gpu: "50",
 };
 
 const GPUS: Gpu[] = ["nvidia", "amd", "intel"];
 const MACHINES: Machine[] = ["desktop", "hybrid"];
 const CPUS: Cpu[] = ["v3", "baseline"];
 const STEAMS: SteamKind[] = ["native", "flatpak"];
+const DLSS5_GPUS: Dlss5Gpu[] = ["50", "40"];
 
 const SHA_V3 =
   "85cb18030a352fdd36f6d85c6f425a48c87620cddb14946ba1da04ff92de4aa69dadf29c43631d586563f13832c48334fe8f9ecac69bf77f815f346615847d3e";
@@ -72,6 +78,10 @@ function isSteam(value: string): value is SteamKind {
   return STEAMS.includes(value as SteamKind);
 }
 
+function isDlss5Gpu(value: string): value is Dlss5Gpu {
+  return DLSS5_GPUS.includes(value as Dlss5Gpu);
+}
+
 export function sanitizeOptions(input: Partial<Options> | null | undefined): Options {
   return {
     gpu: input?.gpu && isGpu(input.gpu) ? input.gpu : DEFAULT_OPTIONS.gpu,
@@ -79,6 +89,8 @@ export function sanitizeOptions(input: Partial<Options> | null | undefined): Opt
     cpu: input?.cpu && isCpu(input.cpu) ? input.cpu : DEFAULT_OPTIONS.cpu,
     steam: input?.steam && isSteam(input.steam) ? input.steam : DEFAULT_OPTIONS.steam,
     pin: Boolean(input?.pin),
+    dlss5: Boolean(input?.dlss5),
+    dlss5Gpu: input?.dlss5Gpu && isDlss5Gpu(input.dlss5Gpu) ? input.dlss5Gpu : DEFAULT_OPTIONS.dlss5Gpu,
   };
 }
 
@@ -99,7 +111,9 @@ export function buildInstallScript(input: Options): string {
     .replaceAll("__DEFAULT_MACHINE__", o.machine)
     .replaceAll("__DEFAULT_CPU__", o.cpu)
     .replaceAll("__DEFAULT_STEAM__", o.steam)
-    .replaceAll("__DEFAULT_PIN__", o.pin ? "1" : "0");
+    .replaceAll("__DEFAULT_PIN__", o.pin ? "1" : "0")
+    .replaceAll("__DEFAULT_DLSS5__", o.gpu === "nvidia" && o.dlss5 ? "1" : "0")
+    .replaceAll("__DEFAULT_DLSS5_GPU__", o.dlss5Gpu);
   if (script.includes("__DEFAULT_")) {
     throw new Error("Installer template still has placeholders");
   }
@@ -112,7 +126,7 @@ export function buildPkgbuild(input: Options): string {
   const sha = archiveSha(o.cpu);
   const url = `https://github.com/nanomatters/proton-cachyos/releases/download/${RELEASE.tag}/${archive}`;
   return `# Unofficial CachyOS / Arch package. Native Steam only.
-# Flatpak Steam cannot see /usr/share — use wolfsgate-cachyos.sh instead.
+# Flatpak Steam cannot see /usr/share — use the wolfsgate program instead.
 pkgname=proton-wineland-w3
 pkgver=11.0.20260930
 pkgrel=1
@@ -148,10 +162,16 @@ package() {
 
 export function launchOptions(input: Options): { line: string; note: string } {
   const o = sanitizeOptions(input);
+  const dlss5 =
+    o.gpu === "nvidia" && o.dlss5
+      ? 'WINEDLLOVERRIDES="dxgi=n,b" PROTON_NVIDIA_NVCUDA=1 '
+      : "";
   if (o.machine === "hybrid" && o.gpu === "nvidia") {
     return {
-      line: "PROTON_ENABLE_NVAPI=1 VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only %command%",
-      note: "Paste this. With an iGPU left visible, the remaster picks the weak GPU, locks the low preset, and hides ray tracing again.",
+      line: `${dlss5}PROTON_ENABLE_NVAPI=1 VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only %command%`,
+      note: o.dlss5
+        ? "Paste this. DLSS 5 needs the ReShade dxgi hook, and the laptop line keeps the game on the NVIDIA GPU."
+        : "Paste this. With an iGPU left visible, the remaster picks the weak GPU, locks the low preset, and hides ray tracing again.",
     };
   }
   if (o.machine === "hybrid" && o.gpu === "amd") {
@@ -168,8 +188,10 @@ export function launchOptions(input: Options): { line: string; note: string } {
   }
   if (o.gpu === "nvidia") {
     return {
-      line: "PROTON_ENABLE_NVAPI=1 %command%",
-      note: "Leave launch options empty at first. Wineland already enables NVAPI on NVIDIA. Paste this only if DLSS stays grey.",
+      line: `${dlss5}PROTON_ENABLE_NVAPI=1 %command%`,
+      note: o.dlss5
+        ? "Paste this. DLSS 5 is unofficial and loads through ReShade. Turn DLSS on in the graphics menu, then press Home."
+        : "Leave launch options empty at first. Wineland already enables NVAPI on NVIDIA. Paste this only if DLSS stays grey.",
     };
   }
   return {
@@ -178,12 +200,19 @@ export function launchOptions(input: Options): { line: string; note: string } {
   };
 }
 
-export function features(gpu: Gpu): Feature[] {
+export function features(gpu: Gpu, dlss5 = false): Feature[] {
   if (gpu === "nvidia") {
     return [
       { name: "DLSS Super Resolution", state: "yes", detail: "RTX 20 series and newer" },
       { name: "DLSS Ray Reconstruction", state: "yes", detail: "DLSS 4.5, with the remaster" },
       { name: "DLSS Frame Generation", state: "some", detail: "RTX 40 and 50 only" },
+      {
+        name: "DLSS 5 neural rendering",
+        state: dlss5 ? "some" : "no",
+        detail: dlss5
+          ? "Unofficial RenoDX hook. RTX 50 uses NVIDIA's signed 310.8 runtime. It costs frames."
+          : "Optional. Not shipped by CDPR. Turn it on under Your machine.",
+      },
       { name: "NVIDIA Reflex", state: "yes", detail: "Comes back with Streamline" },
       { name: "Ray tracing", state: "yes", detail: "Needs this Proton’s vkd3d-proton" },
       { name: "Path tracing", state: "yes", detail: "PC-only mode in the remaster" },
@@ -213,4 +242,19 @@ export function protonLabel(cpu: Cpu): string {
   return cpu === "v3" ? "Proton Wineland 11.0-20260930 x86-64-v3" : "Proton Wineland 11.0-20260930 x86-64";
 }
 
-export const RUN_COMMAND = "bash wolfsgate-cachyos.sh --yes";
+export function downloadHref(input: Options): string {
+  const o = sanitizeOptions(input);
+  const query = new URLSearchParams({
+    gpu: o.gpu,
+    machine: o.machine,
+    cpu: o.cpu,
+    steam: o.steam,
+    pin: o.pin ? "1" : "0",
+    dlss5: o.gpu === "nvidia" && o.dlss5 ? "1" : "0",
+    dlss5Gpu: o.dlss5Gpu,
+  });
+  return `/download?${query.toString()}`;
+}
+
+export const START_COMMAND = `cd ~/Downloads
+bash wolfsgate`;

@@ -13,15 +13,15 @@
 # skips Streamline (DLSS) and zeroes ray tracing. This is not a DRM crack.
 set -euo pipefail
 
-GPU="__DEFAULT_GPU__"
-MACHINE="__DEFAULT_MACHINE__"
-CPU="__DEFAULT_CPU__"
-STEAM_KIND="__DEFAULT_STEAM__"
+GPU="nvidia"
+MACHINE="desktop"
+CPU="v3"
+STEAM_KIND="native"
 YES=0
 DRY=0
-PIN=__DEFAULT_PIN__
-DLSS5=__DEFAULT_DLSS5__
-DLSS5_GPU=__DEFAULT_DLSS5_GPU__
+PIN=0
+DLSS5=0
+DLSS5_GPU=50
 ACTION="install"
 
 TAG="wineland-11.0-20260930"

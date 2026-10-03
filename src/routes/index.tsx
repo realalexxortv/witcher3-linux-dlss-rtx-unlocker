@@ -5,8 +5,10 @@ import {
   BUILDS,
   DEFAULT_OPTIONS,
   RELEASE,
-  RUN_COMMAND,
+  START_COMMAND,
+  downloadHref,
   type Cpu,
+  type Dlss5Gpu,
   type FeatureState,
   type Gpu,
   type Machine,
@@ -47,9 +49,10 @@ function Home() {
   }, [opts, hydrated]);
 
   const script = useMemo(() => buildInstallScript(opts), [opts]);
+  const href = downloadHref(opts);
   const pkgbuild = useMemo(() => buildPkgbuild(opts), [opts]);
   const launch = launchOptions(opts);
-  const rows = features(opts.gpu);
+  const rows = features(opts.gpu, opts.gpu === "nvidia" && opts.dlss5);
 
   function patch<K extends keyof Options>(key: K, value: Options[K]) {
     setOpts((current) => ({ ...current, [key]: value }));
@@ -84,7 +87,7 @@ function Home() {
           <img src="/favicon.svg" alt="" width={48} height={48} className="h-12 w-12" />
           <div>
             <p className="text-xs font-medium tracking-widest text-gold uppercase">
-              Linux · Steam · AppID 292030
+              CachyOS and other Linux · Steam · App 292030
             </p>
             <h1 className="text-4xl text-fg">Wolfsgate</h1>
           </div>
@@ -101,6 +104,25 @@ function Home() {
         </dl>
       </header>
 
+      <section className="mt-8 rounded-card border border-gold bg-surface p-4 sm:p-5">
+        <h2 className="text-xl text-fg">Launch the app</h2>
+        <p className="mt-2 text-sm text-muted">
+          The program is an AppImage in your GitHub repository. Download it, then start it. A window
+          opens on your machine. Quit Steam first, pick the GPU, and press Install.
+        </p>
+        <pre className="mt-4 overflow-x-auto rounded-card bg-bg px-3 py-3 text-sm text-gold-2">
+          {`chmod +x Wolfsgate-x86_64.AppImage
+./Wolfsgate-x86_64.AppImage`}
+        </pre>
+        <a
+          className="mt-4 inline-flex h-11 items-center gap-2 rounded-card bg-gold px-4 text-sm font-medium text-ink"
+          href="https://github.com/realalexxortv/witcher3-linux-dlss-rtx-unlocker/releases/download/v1.1.0/Wolfsgate-x86_64.AppImage"
+        >
+          <Download className="h-4 w-4" aria-hidden />
+          Download AppImage
+        </a>
+      </section>
+
       <section className="mt-8 grid gap-6 lg:grid-cols-5">
         <form
           className="flex flex-col gap-5 rounded-card border border-line bg-surface p-4 sm:p-5 lg:col-span-2"
@@ -110,7 +132,13 @@ function Home() {
           <Choice
             label="GPU"
             value={opts.gpu}
-            onChange={(gpu) => patch("gpu", gpu)}
+            onChange={(gpu) =>
+              setOpts((current) => ({
+                ...current,
+                gpu,
+                dlss5: gpu === "nvidia" ? current.dlss5 : false,
+              }))
+            }
             options={[
               { id: "nvidia", title: "NVIDIA", detail: "DLSS, frame generation, ray tracing" },
               { id: "amd", title: "AMD", detail: "FSR, ray tracing, path tracing" },
@@ -152,9 +180,34 @@ function Home() {
               onChange={(event) => patch("pin", event.target.checked)}
             />
             <span>
-              Set the necessary Proton in Steam config? (Disable if you rather do it yourself)
+              Set the Proton in Steam’s config. Leave this off if you would rather pick it yourself.
+              Steam must be fully quit, tray icon included.
             </span>
           </label>
+          <label className={`flex items-start gap-3 text-sm ${opts.gpu === "nvidia" ? "text-fg" : "text-muted"}`}>
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 accent-gold"
+              checked={opts.gpu === "nvidia" && opts.dlss5}
+              disabled={opts.gpu !== "nvidia"}
+              onChange={(event) => patch("dlss5", event.target.checked)}
+            />
+            <span>
+              Also install DLSS 5. Unofficial neural rendering for NVIDIA. The game file stays
+              untouched. About 110 MB more, and it costs frames.
+            </span>
+          </label>
+          {opts.gpu === "nvidia" && opts.dlss5 ? (
+            <Choice
+              label="DLSS 5 card"
+              value={opts.dlss5Gpu}
+              onChange={(dlss5Gpu) => patch("dlss5Gpu", dlss5Gpu)}
+              options={[
+                { id: "50", title: "RTX 50", detail: "NVIDIA’s signed 310.8 runtime" },
+                { id: "40", title: "RTX 20 / 30 / 40", detail: "Lecram build. Not the signed file" },
+              ]}
+            />
+          ) : null}
         </form>
 
         <div className="flex flex-col gap-5 lg:col-span-3">
@@ -180,31 +233,31 @@ function Home() {
           </section>
 
           <section className="rounded-card border border-gold bg-surface p-4 sm:p-5">
-            <h2 className="text-xl text-fg">Installer</h2>
+            <h2 className="text-xl text-fg">Start here</h2>
             <p className="mt-2 text-sm text-muted">
-              Save the script, quit Steam, then run it in a terminal. It downloads Proton Wineland
-              from GitHub, checks the SHA512, and puts it in Steam’s compatibility tools. It does
-              not replace proton from the repos.
+              The program is not on your PC until you download it. It saves into Downloads, not
+              into the game folder. Quit Steam first (tray icon too), then run these two lines.
+              Press y when it asks.
             </p>
             <pre className="mt-4 overflow-x-auto rounded-card bg-bg px-3 py-3 text-sm text-gold-2">
-              {RUN_COMMAND}
+              {START_COMMAND}
             </pre>
             <div className="mt-4 hidden flex-wrap gap-3 lg:flex">
-              <button
-                type="button"
+              <a
+                href={href}
+                download="wolfsgate"
                 className="inline-flex h-11 items-center gap-2 rounded-card bg-gold px-4 text-sm font-medium text-ink"
-                onClick={() => download("wolfsgate-cachyos.sh", script)}
               >
                 <Download className="h-4 w-4" aria-hidden />
-                Download installer
-              </button>
+                Download wolfsgate
+              </a>
               <button
                 type="button"
                 className="inline-flex h-11 items-center gap-2 rounded-card border border-line px-4 text-sm text-fg"
-                onClick={() => copy("cmd", RUN_COMMAND)}
+                onClick={() => copy("cmd", START_COMMAND)}
               >
                 {copied === "cmd" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied === "cmd" ? "Copied" : "Copy command"}
+                {copied === "cmd" ? "Copied" : "Copy commands"}
               </button>
               <button
                 type="button"
@@ -405,7 +458,7 @@ makepkg -si`}
           The installer records what it copied. It will not delete anything outside Steam’s
           compatibility tools folder.
         </p>
-        <pre className="mt-3 overflow-x-auto text-sm text-gold-2">bash wolfsgate-cachyos.sh --remove</pre>
+        <pre className="mt-3 overflow-x-auto text-sm text-gold-2">bash wolfsgate --remove</pre>
         <p className="mt-6">
           Proton build by{" "}
           <a className="text-gold underline-offset-4 hover:underline" href={RELEASE.page}>
@@ -418,14 +471,14 @@ makepkg -si`}
       </section>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-bg-raise p-3 lg:hidden">
-        <button
-          type="button"
+        <a
+          href={href}
+          download="wolfsgate"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-card bg-gold text-sm font-medium text-ink"
-          onClick={() => download("wolfsgate-cachyos.sh", script)}
         >
           <Download className="h-4 w-4" aria-hidden />
-          Download installer
-        </button>
+          Download wolfsgate
+        </a>
       </div>
     </main>
   );
@@ -456,7 +509,7 @@ function StatePill({ state }: { state: FeatureState }) {
   return <span className={`shrink-0 text-xs font-medium tracking-wide uppercase ${tone}`}>{label}</span>;
 }
 
-function Choice<T extends Gpu | Machine | Cpu | SteamKind>({
+function Choice<T extends Gpu | Machine | Cpu | SteamKind | Dlss5Gpu>({
   label,
   value,
   options,

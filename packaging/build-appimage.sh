@@ -15,6 +15,8 @@ sed \
   -e 's/__DEFAULT_CPU__/v3/' \
   -e 's/__DEFAULT_STEAM__/native/' \
   -e 's/__DEFAULT_PIN__/0/' \
+  -e 's/__DEFAULT_DLSS5__/0/' \
+  -e 's/__DEFAULT_DLSS5_GPU__/50/' \
   "$ROOT/src/lib/wolfsgate.sh" > "$APP/usr/bin/wolfsgate"
 cp "$HERE/server.py" "$HERE/index.html" "$APP/usr/share/wolfsgate/"
 python3 "$HERE/make_icon.py" "$APP/wolfsgate.png"

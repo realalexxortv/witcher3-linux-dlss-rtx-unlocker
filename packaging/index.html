@@ -57,6 +57,8 @@
         <fieldset id="cpu"><legend>CPU</legend></fieldset>
         <fieldset id="steam"><legend>Steam</legend></fieldset>
         <label class="check"><input id="pin" type="checkbox" /> Also select this Proton in Steam’s config. Steam must be fully quit.</label>
+        <label class="check"><input id="dlss5" type="checkbox" /> Also install DLSS 5. Unofficial, NVIDIA only, about 110 MB, costs frames.</label>
+        <fieldset id="dlss5Gpu"><legend>DLSS 5 card</legend></fieldset>
         <div class="row">
           <button class="gold" id="install" type="submit">Install</button>
           <button class="ghost" id="remove" type="button">Remove</button>
@@ -75,9 +77,10 @@
       gpu: [["nvidia", "NVIDIA", "DLSS and ray tracing"], ["amd", "AMD", "FSR and ray tracing"], ["intel", "Intel", "Ray tracing"]],
       machine: [["desktop", "Desktop", "One graphics card"], ["hybrid", "Laptop", "Dedicated GPU plus an iGPU"]],
       cpu: [["v3", "x86-64-v3", "CachyOS default"], ["baseline", "Baseline", "No AVX2"]],
-      steam: [["native", "Native", "steam from the repos"], ["flatpak", "Flatpak", "com.valvesoftware.Steam"]]
+      steam: [["native", "Native", "steam from the repos"], ["flatpak", "Flatpak", "com.valvesoftware.Steam"]],
+      dlss5Gpu: [["50", "RTX 50", "Signed NVIDIA runtime"], ["40", "RTX 20 / 30 / 40", "Lecram build"]]
     };
-    const state = { gpu: "nvidia", machine: "desktop", cpu: "v3", steam: "native" };
+    const state = { gpu: "nvidia", machine: "desktop", cpu: "v3", steam: "native", dlss5Gpu: "50" };
     for (const [key, options] of Object.entries(groups)) {
       const box = document.getElementById(key);
       for (const [id, title, detail] of options) {
@@ -87,7 +90,7 @@
         button.setAttribute("role", "radio");
         button.dataset.id = id;
         button.innerHTML = title + "<small>" + detail + "</small>";
-        button.addEventListener("click", () => { state[key] = id; paint(key); });
+        button.addEventListener("click", () => { state[key] = id; paint(key); syncDlss(); });
         box.appendChild(button);
       }
       paint(key);
@@ -97,6 +100,15 @@
         button.setAttribute("aria-checked", button.dataset.id === state[key] ? "true" : "false");
       }
     }
+    const dlssBox = document.getElementById("dlss5");
+    function syncDlss() {
+      const nvidia = state.gpu === "nvidia";
+      dlssBox.disabled = !nvidia;
+      if (!nvidia) dlssBox.checked = false;
+      document.getElementById("dlss5Gpu").style.display = dlssBox.checked ? "" : "none";
+    }
+    dlssBox.addEventListener("change", syncDlss);
+    syncDlss();
     const logEl = document.getElementById("log");
     const statusEl = document.getElementById("status");
     let timer = 0;
@@ -113,7 +125,7 @@
     }
     function watch() { if (!timer) timer = setInterval(poll, 700); poll(); }
     async function post(path) {
-      const body = { ...state, pin: document.getElementById("pin").checked };
+      const body = { ...state, pin: document.getElementById("pin").checked, dlss5: document.getElementById("dlss5").checked };
       const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

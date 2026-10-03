@@ -106,6 +106,17 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 args.extend(["--" + key, value])
             args.append("--pin" if body.get("pin") else "--no-pin")
+            if body.get("dlss5"):
+                if body.get("gpu") != "nvidia":
+                    self._send(400, '{"error":"dlss5 needs nvidia"}', "application/json")
+                    return
+                generation = body.get("dlss5Gpu", "50")
+                if generation not in {"50", "40"}:
+                    self._send(400, '{"error":"bad dlss5 gpu"}', "application/json")
+                    return
+                args.extend(["--dlss5", "--dlss5-gpu", generation])
+            else:
+                args.append("--no-dlss5")
         args.append("--yes")
         with proc_lock:
             if proc is not None and proc.poll() is None:
