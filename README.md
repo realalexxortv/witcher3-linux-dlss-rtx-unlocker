@@ -1,6 +1,6 @@
 Unlocks DLSS, Ray Tracing and Pathtracing for Linux Witcher 3 Remaster (Steam).
 
-Installation:
+## **Installation:**
 1. Quit Steam fully, also from tray.
 2. Go to releases and Download the Appimage.
 3. Launch Appimage (it opens in Browser).
@@ -12,3 +12,5 @@ Installation:
 9. Launch game, have fun.
 
 Also works with DLSS5 RenoDX Mod (I tested it).
+
+100% vibecoded in Grok.
